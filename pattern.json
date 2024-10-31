@@ -45,5 +45,6 @@
     "Gitlab Personal Token": "glpat-\\S+",
     "Github Personal Token": "ghp_\\S+",
     "Gitlab Runner Token": "glrt-\\S+",
-    "SonarQube Token": "squ_\\S+"
+    "SonarQube Token": "squ_\\S+",
+    "Anthropic Claude API": "sk-ant-api\\S+"
 }
