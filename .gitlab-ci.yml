@@ -1,0 +1,36 @@
+stages:
+  - security
+
+variables:
+  DOCKER_DRIVER: overlay2
+  DOCKER_TLS_CERTDIR: "/certs"
+
+secret-detection:
+  stage: security
+  image: docker:latest
+  services:
+    - docker:dind
+  before_script:
+    - docker info
+  script:
+    - echo "Building secret-detection Docker image..."
+    - docker build -t secret-detection:latest .
+    - echo "Running secret detection scan..."
+    - |
+      docker run --rm \
+        -v $(pwd):/scan \
+        -v $(pwd)/pattern.json:/app/pattern.json:ro \
+        secret-detection:latest \
+        --rule pattern.json --path /scan || true
+  allow_failure: true # Don't fail the pipeline, but still report findings
+  artifacts:
+    when: always
+    expire_in: 30 days
+    paths:
+      - "**/*secret*"
+      - "**/*scan*"
+  only:
+    - branches
+    - merge_requests
+  tags:
+    - docker
