@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  secret-detection:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: secret-detection:latest
+    volumes:
+      # Mount the directory you want to scan
+      - ./scan-target:/scan
+      # Optional: Mount custom pattern file
+      - ./pattern.json:/app/pattern.json:ro
+    # Example usage:
+    # docker-compose run secret-detection --rule pattern.json --path /scan
+    stdin_open: true
+    tty: true
