@@ -12,14 +12,16 @@ secret-detection:
     - docker:dind
   before_script:
     - docker info
+    - echo "Cloning secret-detection tool from GitHub..."
+    - git clone https://github.com/vietjovi/secret-detection.git /tmp/secret-detection
   script:
     - echo "Building secret-detection Docker image..."
-    - docker build -t secret-detection:latest .
+    - docker build -t secret-detection:latest /tmp/secret-detection
     - echo "Running secret detection scan..."
     - |
       docker run --rm \
         -v $(pwd):/scan \
-        -v $(pwd)/pattern.json:/app/pattern.json:ro \
+        -v /tmp/secret-detection/pattern.json:/app/pattern.json:ro \
         secret-detection:latest \
         --rule pattern.json --path /scan || true
   allow_failure: true # Don't fail the pipeline, but still report findings
