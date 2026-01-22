@@ -133,28 +133,38 @@ This project includes pre-configured CI/CD workflow files for easy integration:
 Two workflow files are available in `.github/workflows/`:
 
 1. **`secret-detection.yml`** - Uses Docker (recommended)
+   - Automatically clones the tool from [GitHub repository](https://github.com/vietjovi/secret-detection.git)
+   - Builds the Docker image and scans your repository
    - Automatically runs on push, pull requests, and can be scheduled
-   - Builds the Docker image and scans the repository
    - Uploads scan results as artifacts
 
 2. **`secret-detection-python.yml`** - Uses Python directly
+   - Automatically clones the tool from [GitHub repository](https://github.com/vietjovi/secret-detection.git)
    - No Docker required
    - Faster startup time
    - Same triggers and artifact uploads
 
 **To use:**
 - Copy the workflow file(s) to your repository's `.github/workflows/` directory
+- The workflows will automatically pull the latest version of secret-detection from GitHub
 - The workflows will automatically run on push/PR to main/master/develop branches
 - You can also trigger them manually via GitHub Actions UI
 
-**Custom GitHub Actions Workflow:**
+**Custom GitHub Actions Workflow (pulling from GitHub):**
 ```yaml
+- name: Clone secret-detection tool
+  run: |
+    git clone https://github.com/vietjovi/secret-detection.git /tmp/secret-detection
+
+- name: Build Docker image
+  working-directory: /tmp/secret-detection
+  run: docker build -t secret-detection:latest .
+
 - name: Run secret detection
   run: |
-    docker build -t secret-detection:latest .
     docker run --rm \
       -v ${{ github.workspace }}:/scan \
-      -v ${{ github.workspace }}/pattern.json:/app/pattern.json \
+      -v /tmp/secret-detection/pattern.json:/app/pattern.json:ro \
       secret-detection:latest \
       --rule pattern.json --path /scan
 ```
@@ -163,25 +173,29 @@ Two workflow files are available in `.github/workflows/`:
 
 A pre-configured `.gitlab-ci.yml` file is included:
 
+- Automatically clones the tool from [GitHub repository](https://github.com/vietjovi/secret-detection.git)
 - Automatically runs on branches and merge requests
 - Uses Docker-in-Docker service
 - Uploads scan results as artifacts
 - Configured to not fail the pipeline (reports findings without blocking)
 
 **To use:**
-- The `.gitlab-ci.yml` file is already in the repository root
+- Copy the `.gitlab-ci.yml` file to your repository root
 - GitLab will automatically detect and run it
+- The workflow will automatically pull the latest version of secret-detection from GitHub
 - Ensure your GitLab runner has Docker support enabled
 
-**Custom GitLab CI Configuration:**
+**Custom GitLab CI Configuration (pulling from GitHub):**
 ```yaml
 secret-detection:
   image: docker:latest
   services:
     - docker:dind
+  before_script:
+    - git clone https://github.com/vietjovi/secret-detection.git /tmp/secret-detection
   script:
-    - docker build -t secret-detection:latest .
-    - docker run --rm -v $(pwd):/scan -v $(pwd)/pattern.json:/app/pattern.json secret-detection:latest --rule pattern.json --path /scan
+    - docker build -t secret-detection:latest /tmp/secret-detection
+    - docker run --rm -v $(pwd):/scan -v /tmp/secret-detection/pattern.json:/app/pattern.json:ro secret-detection:latest --rule pattern.json --path /scan
 ```
 
 ### Other CI/CD Platforms
